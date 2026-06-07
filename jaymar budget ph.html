@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Pera with Jay | Budget Planner PH</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* ── LIGHT MODE (default) ── */
+  :root {
+    --bg:       #f4f6fa;
+    --bg2:      #ffffff;
+    --header-bg: linear-gradient(135deg,#0b1f3a 0%,#112244 100%);
+    --card-bg:  #ffffff;
+    --card-border: #e4e8f0;
+    --text:     #1a2a3a;
+    --text2:    #4a5568;
+    --muted:    #8a95a3;
+    --input-bg: #f0f4fa;
+    --input-border: #d0d8e8;
+    --input-text: #1a2a3a;
+    --row-border: #edf0f5;
+    --gold:     #c9a84c;
+    --gold2:    #e8c96a;
+    --green-hi: #0a7a3a;
+    --radius:   16px;
+    --tab-bg:   rgba(11,31,58,0.08);
+    --tab-text: #6a7a8a;
+    --toggle-bg: rgba(11,31,58,0.08);
+  }
+
+  /* ── DARK MODE ── */
+  body.dark {
+    --bg:       #0a0f1a;
+    --bg2:      #111827;
+    --header-bg: linear-gradient(135deg,#050c18 0%,#0a1628 100%);
+    --card-bg:  #111827;
+    --card-border: #1e2d42;
+    --text:     #e8f0fe;
+    --text2:    #a0b4c8;
+    --muted:    #4a6070;
+    --input-bg: #0d1a28;
+    --input-border: #1e3048;
+    --input-text: #7de8aa;
+    --row-border: #1a2a3a;
+    --gold:     #c9a84c;
+    --gold2:    #e8c96a;
+    --green-hi: #00e87a;
+    --tab-bg:   rgba(255,255,255,0.04);
+    --tab-text: #4a6070;
+    --toggle-bg: rgba(255,255,255,0.06);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding-bottom: 60px;
+    transition: background 0.3s, color 0.3s;
+    font-size: 16px;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    background: var(--header-bg);
+    padding: 20px 16px 14px;
+    text-align: center;
+    border-bottom: 2px solid var(--gold);
+    position: relative;
+  }
+  .header-brand { font-family: 'Playfair Display',serif; font-size: 22px; color: var(--gold2); letter-spacing: 1px; }
+  .header-sub   { font-size: 11px; color: #6a7a8a; margin-top: 2px; letter-spacing: 2px; text-transform: uppercase; }
+  .year-label   { font-size: 14px; color: var(--gold); font-weight: 600; margin-top: 6px; letter-spacing: 1px; }
+  .save-ind     { font-size: 11px; color: #00e87a; margin-top: 4px; opacity: 0; transition: opacity 0.4s; letter-spacing: 1px; }
+
+  /* ── DARK MODE TOGGLE ── */
+  .dm-toggle-wrap {
+    position: absolute; top: 16px; right: 16px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .dm-label { font-size: 10px; color: #6a7a8a; letter-spacing: 1px; }
+  .dm-switch {
+    width: 40px; height: 22px; background: #2a3a4a;
+    border-radius: 11px; position: relative; cursor: pointer;
+    transition: background 0.3s; border: none; padding: 0;
+    flex-shrink: 0;
+  }
+  .dm-switch::after {
+    content: ''; position: absolute; top: 3px; left: 3px;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #6a7a8a; transition: all 0.3s;
+  }
+  body.dark .dm-switch { background: #00c060; }
+  body.dark .dm-switch::after { left: 21px; background: #fff; }
+
+  /* ── MONTH TABS ── */
+  .month-tabs-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; padding: 14px 16px 0; scrollbar-width: none; background: var(--bg2); border-bottom: 1px solid var(--card-border); }
+  .month-tabs-wrap::-webkit-scrollbar { display: none; }
+  .month-tabs { display: flex; gap: 8px; width: max-content; padding-bottom: 10px; }
+  .month-tab {
+    padding: 9px 16px; border: 1.5px solid var(--input-border);
+    background: var(--tab-bg); color: var(--tab-text);
+    font-family: 'DM Sans',sans-serif; font-size: 13px; font-weight: 600;
+    border-radius: 20px; cursor: pointer; transition: all 0.2s;
+    white-space: nowrap; position: relative;
+  }
+  .month-tab.active { background: var(--gold); color: #0b1f3a; border-color: var(--gold); }
+  .month-tab.has-data::after {
+    content: '●'; position: absolute; top: -4px; right: -2px;
+    font-size: 8px; color: var(--gold2);
+  }
+  .month-tab.active.has-data::after { color: #0b1f3a; }
+
+  /* ── VIEW TOGGLE ── */
+  .view-toggle { display: flex; margin: 12px 16px 0; background: var(--toggle-bg); border-radius: 30px; padding: 4px; border: 1px solid var(--card-border); }
+  .view-btn { flex: 1; padding: 9px; border: none; background: transparent; color: var(--muted); font-family: 'DM Sans',sans-serif; font-size: 14px; font-weight: 600; border-radius: 26px; cursor: pointer; transition: all 0.25s; }
+  .view-btn.active { background: var(--gold); color: #0b1f3a; }
+
+  /* ── SECTION ── */
+  .section { margin: 16px 16px 0; }
+  .section-title { font-family: 'Playfair Display',serif; font-size: 18px; color: var(--gold2); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+  body:not(.dark) .section-title { color: #0b1f3a; }
+
+  /* ── CARD ── */
+  .card { background: var(--card-bg); border-radius: var(--radius); padding: 14px; border: 1px solid var(--card-border); transition: background 0.3s; }
+
+  /* ── INPUT ROW ── */
+  .input-row { display: flex; align-items: center; gap: 8px; padding: 10px 0; border-bottom: 1px solid var(--row-border); }
+  .input-row:last-child { border-bottom: none; }
+  .input-label { flex: 1; font-size: 14px; color: var(--text); font-weight: 500; }
+  .input-label .sublabel { display: block; font-size: 11px; color: var(--muted); font-weight: 400; margin-top: 1px; }
+  .input-field {
+    width: 120px; padding: 8px 10px; border: 1.5px solid var(--input-border);
+    border-radius: 8px; font-family: 'DM Sans',sans-serif; font-size: 14px;
+    color: var(--input-text); text-align: right; background: var(--input-bg);
+    transition: border 0.2s, background 0.3s; -webkit-appearance: none;
+    font-weight: 600;
+  }
+  .input-field:focus { outline: none; border-color: var(--gold); }
+  body.dark .input-field::placeholder { color: #2a4a5a; }
+
+  /* ── TOTALS ROW ── */
+  .totals-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0 0; border-top: 1.5px solid var(--row-border); margin-top: 4px; }
+  .totals-label { font-size: 14px; font-weight: 700; color: var(--text); }
+  .totals-value { font-size: 16px; font-weight: 700; font-family: 'Playfair Display',serif; color: var(--gold); }
+
+  /* ── SUMMARY BANNER ── */
+  .summary-banner {
+    margin: 14px 16px 0;
+    background: linear-gradient(135deg,var(--gold) 0%,#b8932e 100%);
+    border-radius: var(--radius); padding: 16px;
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; text-align: center;
+  }
+  .sum-label { font-size: 10px; color: rgba(11,31,58,0.7); text-transform: uppercase; letter-spacing: 1px; font-weight: 700; }
+  .sum-value { font-family: 'Playfair Display',serif; font-size: 15px; color: #0b1f3a; font-weight: 700; margin-top: 2px; word-break: break-all; }
+  .sum-value.negative { color: #7a0000; }
+  .sum-value.positive { color: #003a10; }
+
+  /* ── EXPENSE ALERT ── */
+  .expense-alert { margin: 10px 16px 0; padding: 12px 14px; border-radius: 10px; font-size: 14px; font-weight: 500; display: none; align-items: center; gap: 8px; line-height: 1.5; }
+  .expense-alert.warning { background: #c0392b; border: 2px solid #e74c3c; color: #fff; display: flex; }
+  .expense-alert.ok      { background: #0a6a35; border: 2px solid #00c060; color: #fff; display: flex; }
+
+  /* ── JAR GRID ── */
+  .jar-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .jar-card { border-radius: 14px; padding: 14px; text-align: center; position: relative; overflow: hidden; transition: background 0.3s; }
+  .jar-card::before { content:''; position:absolute; top:-20px; right:-20px; width:70px; height:70px; border-radius:50%; opacity:0.18; background:white; }
+  .jar-icon   { font-size: 26px; margin-bottom: 5px; }
+  .jar-name   { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; opacity: 0.9; }
+  .jar-pct    { font-size: 22px; font-family: 'Playfair Display',serif; font-weight: 900; margin: 4px 0 2px; }
+  .jar-amount { font-size: 13px; font-weight: 600; opacity: 0.95; }
+  .jar-desc   { font-size: 10px; opacity: 0.7; margin-top: 3px; }
+  /* Pastel glass jar cards */
+  .jar-card {
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.25);
+    box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+  }
+  .jar-expenses {
+    background: linear-gradient(135deg, rgba(147,197,253,0.45) 0%, rgba(99,162,235,0.30) 100%);
+    color: #1e3a5a;
+    border-color: rgba(147,197,253,0.5);
+  }
+  .jar-invest {
+    background: linear-gradient(135deg, rgba(134,239,172,0.45) 0%, rgba(74,200,120,0.28) 100%);
+    color: #14532d;
+    border-color: rgba(134,239,172,0.5);
+  }
+  .jar-play {
+    background: linear-gradient(135deg, rgba(253,186,116,0.45) 0%, rgba(251,146,60,0.28) 100%);
+    color: #7c2d12;
+    border-color: rgba(253,186,116,0.5);
+  }
+  .jar-savings {
+    background: linear-gradient(135deg, rgba(253,224,132,0.45) 0%, rgba(250,204,21,0.28) 100%);
+    color: #713f12;
+    border-color: rgba(253,224,132,0.5);
+  }
+  .jar-giving {
+    background: linear-gradient(135deg, rgba(216,180,254,0.45) 0%, rgba(192,132,252,0.28) 100%);
+    color: #4a1d96;
+    border-color: rgba(216,180,254,0.5);
+  }
+  /* Dark mode jar overrides */
+  body.dark .jar-expenses { background: linear-gradient(135deg, #0d2a4a 0%, #0a1e38 100%); color:#a8d4ff; border-color: rgba(147,197,253,0.30); }
+  body.dark .jar-invest   { background: linear-gradient(135deg, #0a2e1a 0%, #071e10 100%); color:#7de8aa; border-color: rgba(134,239,172,0.30); }
+  body.dark .jar-play     { background: linear-gradient(135deg, #2e1a08 0%, #1e1005 100%); color:#fdb07a; border-color: rgba(253,186,116,0.30); }
+  body.dark .jar-savings  { background: linear-gradient(135deg, #2e2408 0%, #1e1805 100%); color:#fdd97a; border-color: rgba(253,224,132,0.30); }
+  body.dark .jar-giving   { background: linear-gradient(135deg, #1e0e36 0%, #140828 100%); color:#d8b4fe; border-color: rgba(216,180,254,0.30); }
+  /* Progress bars match card */
+  .jar-expenses .progress-bar { background: rgba(99,162,235,0.7); }
+  .jar-invest   .progress-bar { background: rgba(74,200,120,0.7); }
+  .jar-play     .progress-bar { background: rgba(251,146,60,0.7); }
+  .jar-savings  .progress-bar { background: rgba(250,204,21,0.7); }
+  .jar-giving   .progress-bar { background: rgba(192,132,252,0.7); }
+  .jar-full { grid-column: 1 / -1; }
+  .progress-wrap { background: rgba(255,255,255,0.1); border-radius: 8px; height: 6px; margin-top: 8px; overflow: hidden; }
+  .progress-bar  { height: 100%; border-radius: 8px; background: currentColor; transition: width 0.6s cubic-bezier(.4,0,.2,1); }
+
+  /* ── ADD ROW ── */
+  .add-row-btn { width:100%; margin-top:10px; padding:9px; border:1.5px dashed var(--gold); border-radius:10px; background:transparent; color:var(--gold); font-family:'DM Sans',sans-serif; font-size:13px; font-weight:600; cursor:pointer; transition:all 0.2s; }
+  .add-row-btn:hover { background:rgba(201,168,76,0.1); }
+  .custom-row { display:flex; gap:6px; align-items:center; padding:9px 0; border-bottom:1px solid var(--row-border); }
+  .custom-label-input { flex:1; padding:8px 10px; border:1.5px solid var(--input-border); border-radius:8px; font-family:'DM Sans',sans-serif; font-size:13px; color:var(--input-text); background:var(--input-bg); transition: background 0.3s; }
+  .custom-label-input:focus { outline:none; border-color:var(--gold); }
+  .remove-btn { background:none; border:none; color:#e74c3c; font-size:18px; cursor:pointer; padding:4px; }
+
+  /* ── YEARLY TABLE ── */
+  .yr-wrap { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+  .yr-table { width:100%; border-collapse:collapse; font-size:13px; }
+  .yr-table th { background:var(--gold); color:#0b1f3a; padding:9px 6px; text-align:center; font-weight:700; font-size:11px; letter-spacing:0.5px; }
+  .yr-table td { padding:8px 6px; text-align:center; border-bottom:1px solid var(--row-border); font-size:13px; color: var(--text); }
+  .yr-table tr:nth-child(even) td { background:var(--tab-bg); }
+  .yr-table .month-name { text-align:left; font-weight:600; color:var(--gold); }
+  .yr-table .positive { color:#00c060; font-weight:700; }
+  .yr-table .negative { color:#ff6060; font-weight:700; }
+  .yr-table .total-row td { background:rgba(201,168,76,0.15); font-weight:700; color:var(--gold2); border-top:2px solid var(--gold); font-size:14px; }
+
+  /* ── FOOTER ── */
+  .footer { text-align:center; margin-top:28px; padding:0 16px; font-size:11px; color:var(--muted); letter-spacing:1px; text-transform:uppercase; line-height:1.8; }
+  .footer strong { color:var(--gold); }
+
+  .month-panel { display: none; }
+  .month-panel.active { display: block; }
+  .yearly-view { display: none; }
+
+  /* ── NECESSITIES NOTE ── */
+  .nec-note {
+    grid-column: 1 / -1;
+    border-radius: 12px;
+    padding: 13px 15px;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.6;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    border: 1.5px solid;
+  }
+  .nec-note .note-icon { font-size: 20px; flex-shrink: 0; margin-top: 1px; }
+  .nec-note .note-text { flex: 1; }
+  .nec-note .note-diff {
+    display: inline-block;
+    font-weight: 700;
+    font-size: 14px;
+    margin-top: 4px;
+  }
+  .nec-note.below {
+    background: linear-gradient(135deg, rgba(134,239,172,0.25), rgba(74,200,120,0.12));
+    border-color: rgba(74,200,120,0.4);
+    color: #14532d;
+  }
+  .nec-note.equal {
+    background: linear-gradient(135deg, rgba(253,224,132,0.30), rgba(250,204,21,0.12));
+    border-color: rgba(250,204,21,0.45);
+    color: #713f12;
+  }
+  .nec-note.above {
+    background: linear-gradient(135deg, rgba(252,165,165,0.30), rgba(239,68,68,0.12));
+    border-color: rgba(239,68,68,0.40);
+    color: #7f1d1d;
+  }
+  body.dark .nec-note.below { background: linear-gradient(135deg,rgba(74,200,120,0.18),rgba(20,83,45,0.25)); color:#7de8aa; border-color:rgba(74,200,120,0.3); }
+  body.dark .nec-note.equal { background: linear-gradient(135deg,rgba(250,204,21,0.15),rgba(113,63,18,0.25)); color:#fdd97a; border-color:rgba(250,204,21,0.3); }
+  body.dark .nec-note.above { background: linear-gradient(135deg,rgba(239,68,68,0.18),rgba(127,29,29,0.25)); color:#fca5a5; border-color:rgba(239,68,68,0.3); }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="dm-toggle-wrap">
+    <span class="dm-label" id="dm-label">☀️</span>
+    <button class="dm-switch" onclick="toggleDark()" aria-label="Toggle dark mode"></button>
+  </div>
+  <div class="header-brand">💰 Pera with Jay</div>
+  <div class="header-sub">Filipino Budget Planner · SM Jaymar Castro, CPA · FA</div>
+  <div class="year-label" id="year-display"></div>
+  <div class="save-ind" id="save-indicator">✓ Auto-saved</div>
+</div>
+
+<!-- MONTH TABS -->
+<div class="month-tabs-wrap">
+  <div class="month-tabs" id="month-tabs"></div>
+</div>
+
+<!-- VIEW TOGGLE -->
+<div class="view-toggle">
+  <button class="view-btn active" onclick="setView('monthly',this)">📅 Monthly View</button>
+  <button class="view-btn" onclick="setView('yearly',this)">📊 Yearly Summary</button>
+</div>
+
+<!-- MONTHLY VIEW -->
+<div id="monthly-view"></div>
+
+<!-- YEARLY VIEW -->
+<div id="yearly-view" class="yearly-view">
+  <div class="section">
+    <div class="section-title"><span>📊</span> Yearly Overview</div>
+    <div class="card">
+      <div class="yr-wrap">
+        <table class="yr-table">
+          <thead><tr><th>Month</th><th>Income</th><th>Expenses</th><th>Net</th></tr></thead>
+          <tbody id="yr-body"></tbody>
+          <tfoot><tr class="total-row" id="yr-total"></tr></tfoot>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="section" style="margin-top:20px;">
+    <div class="section-title"><span>🫙</span> Annual Jar Allocation</div>
+    <div style="font-size:13px; color:var(--muted); margin-bottom:10px;">Based on total yearly gross income across all months.</div>
+    <div class="jar-grid">
+      <div class="jar-card jar-expenses jar-full">
+        <div class="jar-icon">🏠</div><div class="jar-name">Necessities</div>
+        <div class="jar-pct">50%</div><div class="jar-amount" id="yr-jar-necessities">₱0</div>
+        <div class="jar-desc">Food, rent, bills, transport</div>
+        <div class="progress-wrap"><div class="progress-bar" id="yr-prog-necessities" style="width:0%"></div></div>
+      </div>
+      <div class="nec-note" id="yr-nec-note" style="display:none;"></div>
+      <div class="jar-card jar-invest">
+        <div class="jar-icon">📈</div><div class="jar-name">Investment</div>
+        <div class="jar-pct">10%</div><div class="jar-amount" id="yr-jar-invest">₱0</div>
+        <div class="jar-desc">VUL, stocks, MP2</div>
+        <div class="progress-wrap"><div class="progress-bar" id="yr-prog-invest" style="width:0%"></div></div>
+      </div>
+      <div class="jar-card jar-play">
+        <div class="jar-icon">🎉</div><div class="jar-name">Play</div>
+        <div class="jar-pct">10%</div><div class="jar-amount" id="yr-jar-play">₱0</div>
+        <div class="jar-desc">Resto, travel, fun</div>
+        <div class="progress-wrap"><div class="progress-bar" id="yr-prog-play" style="width:0%"></div></div>
+      </div>
+      <div class="jar-card jar-savings">
+        <div class="jar-icon">🏦</div><div class="jar-name">Savings</div>
+        <div class="jar-pct">10%</div><div class="jar-amount" id="yr-jar-savings">₱0</div>
+        <div class="jar-desc">Emergency fund, goals</div>
+        <div class="progress-wrap"><div class="progress-bar" id="yr-prog-savings" style="width:0%"></div></div>
+      </div>
+      <div class="jar-card jar-giving">
+        <div class="jar-icon">🙏</div><div class="jar-name">Giving</div>
+        <div class="jar-pct">10%</div><div class="jar-amount" id="yr-jar-giving">₱0</div>
+        <div class="jar-desc">Tithe, charity, pasalubong</div>
+        <div class="progress-wrap"><div class="progress-bar" id="yr-prog-giving" style="width:0%"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+  <div>Great Golden Eagle Intellectual Property</div>
+  <div><strong>SM Jaymar Castro</strong> · CPA · Financial Advisor · Sun Life</div>
+  <div style="font-size:10px;">Free tool by <strong>Pera with Jay</strong> · For educational use only</div>
+</div>
+
+<script>
+// ── DARK MODE ─────────────────────────────────────────────────
+function toggleDark() {
+  const isDark = document.body.classList.toggle('dark');
+  document.getElementById('dm-label').textContent = isDark ? '🌙' : '☀️';
+  localStorage.setItem('pera_jay_darkmode', isDark ? '1' : '0');
+}
+// Restore dark mode preference
+if (localStorage.getItem('pera_jay_darkmode') === '1') {
+  document.body.classList.add('dark');
+  document.addEventListener('DOMContentLoaded', () => {
+    const lbl = document.getElementById('dm-label');
+    if (lbl) lbl.textContent = '🌙';
+  });
+}
+
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const INCOME_FIELDS = [
+  {id:'inc_commission', label:'Commission Income', sub:'Sun Life / Sales'},
+  {id:'inc_salary',     label:'Basic Salary',      sub:'Employment / Part-time'},
+  {id:'inc_business',   label:'Business Income',   sub:'Negosyo / Sideline'},
+  {id:'inc_ofw',        label:'OFW Remittance',    sub:'From abroad'},
+  {id:'inc_rental',     label:'Rental Income',     sub:'Property / Room'},
+  {id:'inc_freelance',  label:'Freelance / Online', sub:'VA, Design, BPO'},
+  {id:'inc_invest',     label:'Investment Returns', sub:'Dividends, VUL, etc.'},
+];
+const EXPENSE_FIELDS = [
+  {id:'exp_food',      label:'Food & Groceries',          sub:'Palengke, SM, Landers'},
+  {id:'exp_rent',      label:'House Rent / Amortization', sub:'Monthly housing cost'},
+  {id:'exp_utilities', label:'Utilities',                 sub:'Meralco, water, internet'},
+  {id:'exp_transport', label:'Transportation',            sub:'Gas, commute, Grab'},
+  {id:'exp_education', label:'Education',                 sub:'Tuition, school fees'},
+  {id:'exp_medical',   label:'Medical / Health',          sub:'Medicines, checkup'},
+  {id:'exp_clothing',  label:'Clothing',                  sub:'Damit, shoes, etc.'},
+  {id:'exp_sss',       label:'SSS / PhilHealth / Pag-IBIG', sub:'Mandatory contributions'},
+  {id:'exp_subs',      label:'Load / Subscriptions',      sub:'Netflix, Spotify, data'},
+  {id:'exp_loan',      label:'Utang / Loan Payment',      sub:'5-6, bank loan, credit'},
+  {id:'exp_allowance', label:'Allowance (Kids/Parents)',  sub:'Baon, family support'},
+];
+
+const currentYear = new Date().getFullYear();
+const currentMonth = new Date().getMonth(); // 0-indexed
+let activeMonth = currentMonth;
+let customCounts = Array(12).fill(null).map(() => ({income:0, expense:0}));
+
+document.getElementById('year-display').textContent = currentYear;
+
+// Build month tabs
+const tabsEl = document.getElementById('month-tabs');
+const monthlyViewEl = document.getElementById('monthly-view');
+
+MONTHS.forEach((m, i) => {
+  // Tab
+  const tab = document.createElement('button');
+  tab.className = 'month-tab' + (i === activeMonth ? ' active' : '');
+  tab.id = `tab-${i}`;
+  tab.textContent = m.slice(0,3).toUpperCase();
+  tab.onclick = () => switchMonth(i);
+  tabsEl.appendChild(tab);
+
+  // Panel
+  const panel = document.createElement('div');
+  panel.className = 'month-panel' + (i === activeMonth ? ' active' : '');
+  panel.id = `panel-${i}`;
+  panel.innerHTML = buildPanelHTML(i);
+  monthlyViewEl.appendChild(panel);
+});
+
+// Scroll active tab into view
+setTimeout(() => {
+  const activeTab = document.getElementById(`tab-${activeMonth}`);
+  activeTab.scrollIntoView({behavior:'smooth', inline:'center', block:'nearest'});
+}, 100);
+
+function buildPanelHTML(mi) {
+  const m = MONTHS[mi];
+  let inc = INCOME_FIELDS.map(f => `
+    <div class="input-row">
+      <div class="input-label">${f.label}<span class="sublabel">${f.sub}</span></div>
+      <input class="input-field" type="number" id="m${mi}_${f.id}" placeholder="0" oninput="calculate(${mi})" min="0">
+    </div>`).join('');
+
+  let exp = EXPENSE_FIELDS.map(f => `
+    <div class="input-row">
+      <div class="input-label">${f.label}<span class="sublabel">${f.sub}</span></div>
+      <input class="input-field" type="number" id="m${mi}_${f.id}" placeholder="0" oninput="calculate(${mi})" min="0">
+    </div>`).join('');
+
+  return `
+  <div class="section" style="margin-top:14px;">
+    <div class="section-title"><span>📥</span> ${m} — Income</div>
+    <div class="card">
+      ${inc}
+      <div id="custom-income-rows-${mi}"></div>
+      <button class="add-row-btn" onclick="addCustomRow(${mi},'income')">+ Add Income Source</button>
+      <div class="totals-row">
+        <span class="totals-label">Total Income</span>
+        <span class="totals-value" id="m${mi}_total-income">₱0</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title"><span>📤</span> ${m} — Expenses</div>
+    <div class="card">
+      ${exp}
+      <div id="custom-expense-rows-${mi}"></div>
+      <button class="add-row-btn" onclick="addCustomRow(${mi},'expense')">+ Add Expense</button>
+      <div class="totals-row">
+        <span class="totals-label">Total Expenses</span>
+        <span class="totals-value" id="m${mi}_total-expenses">₱0</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="expense-alert" id="m${mi}_expense-alert"></div>
+
+  <div class="summary-banner">
+    <div class="sum-item"><div class="sum-label">Gross Income</div><div class="sum-value" id="m${mi}_sum-income">₱0</div></div>
+    <div class="sum-item"><div class="sum-label">Expenses</div><div class="sum-value" id="m${mi}_sum-expenses">₱0</div></div>
+    <div class="sum-item"><div class="sum-label">Net Income</div><div class="sum-value" id="m${mi}_sum-net">₱0</div></div>
+  </div>
+
+  <div class="section" style="margin-top:16px;">
+    <div class="section-title"><span>🫙</span> ${m} Jar Allocation</div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">Based on your gross income for ${m}.</div>
+    <div class="jar-grid">
+      <div class="jar-card jar-expenses jar-full">
+        <div class="jar-icon">🏠</div><div class="jar-name">Necessities</div>
+        <div class="jar-pct">50%</div><div class="jar-amount" id="m${mi}_jar-necessities">₱0</div>
+        <div class="jar-desc">Food, rent, bills, transport</div>
+        <div class="progress-wrap"><div class="progress-bar" id="m${mi}_prog-necessities" style="width:0%"></div></div>
+      </div>
+      <div class="nec-note" id="m${mi}_nec-note" style="display:none;"></div>
+      <div class="jar-card jar-invest">
+        <div class="jar-icon">📈</div><div class="jar-name">Investment</div>
+        <div class="jar-pct">10%</div><div class="jar-amount" id="m${mi}_jar-invest">₱0</div>
+        <div class="jar-desc">VUL, stocks, MP2</div>
+        <div class="progress-wrap"><div class="progress-bar" id="m${mi}_prog-invest" style="width:0%"></div></div>
+      </div>
+      <div class="jar-card jar-play">
+        <div class="jar-icon">🎉</div><div class="jar-name">Play</div>
+        <div class="jar-pct">10%</div><div class="jar-amount" id="m${mi}_jar-play">₱0</div>
+        <div class="jar-desc">Resto, travel, fun</div>
+        <div class="progress-wrap"><div class="progress-bar" id="m${mi}_prog-play" style="width:0%"></div></div>
+      </div>
+      <div class="jar-card jar-savings">
+        <div class="jar-icon">🏦</div><div class="jar-name">Savings</div>
+        <div class="jar-pct">10%</div><div class="jar-amount" id="m${mi}_jar-savings">₱0</div>
+        <div class="jar-desc">Emergency fund, goals</div>
+        <div class="progress-wrap"><div class="progress-bar" id="m${mi}_prog-savings" style="width:0%"></div></div>
+      </div>
+      <div class="jar-card jar-giving">
+        <div class="jar-icon">🙏</div><div class="jar-name">Giving</div>
+        <div class="jar-pct">10%</div><div class="jar-amount" id="m${mi}_jar-giving">₱0</div>
+        <div class="jar-desc">Tithe, charity, pasalubong</div>
+        <div class="progress-wrap"><div class="progress-bar" id="m${mi}_prog-giving" style="width:0%"></div></div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ── STORAGE KEY ─────────────────────────────────────────────
+const STORE_KEY = `pera_jay_${currentYear}`;
+
+function saveAll() {
+  const data = {};
+  for (let mi = 0; mi < 12; mi++) {
+    const mData = { income: {}, expense: {}, custom: [] };
+    INCOME_FIELDS.forEach(f => {
+      const el = document.getElementById(`m${mi}_${f.id}`);
+      if (el) mData.income[f.id] = el.value;
+    });
+    EXPENSE_FIELDS.forEach(f => {
+      const el = document.getElementById(`m${mi}_${f.id}`);
+      if (el) mData.expense[f.id] = el.value;
+    });
+    // Custom rows
+    document.querySelectorAll(`#custom-income-rows-${mi} .custom-row`).forEach(row => {
+      const label = row.querySelector('.custom-label-input')?.value || '';
+      const val   = row.querySelector('input[type="number"]')?.value || '';
+      mData.custom.push({ type: 'income', label, val });
+    });
+    document.querySelectorAll(`#custom-expense-rows-${mi} .custom-row`).forEach(row => {
+      const label = row.querySelector('.custom-label-input')?.value || '';
+      const val   = row.querySelector('input[type="number"]')?.value || '';
+      mData.custom.push({ type: 'expense', label, val });
+    });
+    data[mi] = mData;
+  }
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(data)); } catch(e) {}
+}
+
+function loadAll() {
+  let data;
+  try { data = JSON.parse(localStorage.getItem(STORE_KEY)); } catch(e) {}
+  if (!data) return;
+
+  for (let mi = 0; mi < 12; mi++) {
+    const mData = data[mi];
+    if (!mData) continue;
+    // Standard fields
+    INCOME_FIELDS.forEach(f => {
+      const el = document.getElementById(`m${mi}_${f.id}`);
+      if (el && mData.income[f.id]) el.value = mData.income[f.id];
+    });
+    EXPENSE_FIELDS.forEach(f => {
+      const el = document.getElementById(`m${mi}_${f.id}`);
+      if (el && mData.expense[f.id]) el.value = mData.expense[f.id];
+    });
+    // Custom rows
+    (mData.custom || []).forEach(c => {
+      const isIncome = c.type === 'income';
+      const containerId = isIncome ? `custom-income-rows-${mi}` : `custom-expense-rows-${mi}`;
+      const container = document.getElementById(containerId);
+      if (!container) return;
+      const id = isIncome ? ++customCounts[mi].income : ++customCounts[mi].expense;
+      const rowId = `custom-${c.type}-row-${mi}-${id}`;
+      const fieldClass = isIncome ? `custom-income-field-${mi}` : `custom-expense-field-${mi}`;
+      const div = document.createElement('div');
+      div.className = 'custom-row'; div.id = rowId;
+      div.innerHTML = `
+        <input class="custom-label-input" type="text" placeholder="${isIncome ? 'Income source' : 'Expense name'}" value="${c.label.replace(/"/g,'&quot;')}">
+        <input class="input-field ${fieldClass}" type="number" placeholder="0" oninput="onInput(${mi})" min="0" style="width:110px;" value="${c.val}">
+        <button class="remove-btn" onclick="removeRow('${rowId}',${mi})">✕</button>`;
+      container.appendChild(div);
+    });
+    calculate(mi);
+  }
+  showSaved();
+}
+
+// Debounced save indicator
+let saveTimer;
+function onInput(mi) { calculate(mi); clearTimeout(saveTimer); saveTimer = setTimeout(() => { saveAll(); showSaved(); }, 600); }
+
+function showSaved() {
+  const el = document.getElementById('save-indicator');
+  if (!el) return;
+  el.style.opacity = '1';
+  clearTimeout(el._t);
+  el._t = setTimeout(() => { el.style.opacity = '0'; }, 2000);
+}
+
+// ── MONTH SWITCH ─────────────────────────────────────────────
+function switchMonth(mi) {
+  document.querySelectorAll('.month-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.month-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById(`tab-${mi}`).classList.add('active');
+  document.getElementById(`panel-${mi}`).classList.add('active');
+  document.getElementById(`tab-${mi}`).scrollIntoView({behavior:'smooth', inline:'center', block:'nearest'});
+  activeMonth = mi;
+}
+
+function setView(v, btn) {
+  document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  if (v === 'monthly') {
+    document.getElementById('monthly-view').style.display = '';
+    document.getElementById('yearly-view').style.display = 'none';
+  } else {
+    document.getElementById('monthly-view').style.display = 'none';
+    document.getElementById('yearly-view').style.display = '';
+    buildYearlySummary();
+  }
+}
+
+function fmt(n) {
+  if (n === 0) return '₱0';
+  const sign = n < 0 ? '-' : '';
+  return sign + '₱' + Math.abs(n).toLocaleString('en-PH', {minimumFractionDigits:0, maximumFractionDigits:0});
+}
+
+function getMonthIncome(mi) {
+  let total = INCOME_FIELDS.reduce((s, f) => {
+    const el = document.getElementById(`m${mi}_${f.id}`);
+    return s + (el ? parseFloat(el.value)||0 : 0);
+  }, 0);
+  document.querySelectorAll(`.custom-income-field-${mi}`).forEach(el => { total += parseFloat(el.value)||0; });
+  return total;
+}
+
+function getMonthExpense(mi) {
+  let total = EXPENSE_FIELDS.reduce((s, f) => {
+    const el = document.getElementById(`m${mi}_${f.id}`);
+    return s + (el ? parseFloat(el.value)||0 : 0);
+  }, 0);
+  document.querySelectorAll(`.custom-expense-field-${mi}`).forEach(el => { total += parseFloat(el.value)||0; });
+  return total;
+}
+
+function calculate(mi) {
+  const inc = getMonthIncome(mi);
+  const exp = getMonthExpense(mi);
+  const net = inc - exp;
+
+  document.getElementById(`m${mi}_total-income`).textContent = fmt(inc);
+  document.getElementById(`m${mi}_total-expenses`).textContent = fmt(exp);
+  document.getElementById(`m${mi}_sum-income`).textContent = fmt(inc);
+  document.getElementById(`m${mi}_sum-expenses`).textContent = fmt(exp);
+
+  const netEl = document.getElementById(`m${mi}_sum-net`);
+  netEl.textContent = fmt(net);
+  netEl.className = 'sum-value ' + (net < 0 ? 'negative' : 'positive');
+
+  const alertEl = document.getElementById(`m${mi}_expense-alert`);
+  if (inc > 0) {
+    const pct = (exp / inc) * 100;
+    if (pct > 50) {
+      alertEl.className = 'expense-alert warning';
+      alertEl.innerHTML = `⚠️ Expenses are <strong>${pct.toFixed(0)}%</strong> of income — above 50%. Reduce by ₱${Math.round(exp - inc*0.5).toLocaleString()}.`;
+    } else {
+      alertEl.className = 'expense-alert ok';
+      alertEl.innerHTML = `✅ Expenses at <strong>${pct.toFixed(0)}%</strong> of income — within healthy 50%. Galing!`;
+    }
+  } else {
+    alertEl.className = 'expense-alert';
+  }
+
+  [{key:'necessities',pct:.5},{key:'invest',pct:.1},{key:'play',pct:.1},{key:'savings',pct:.1},{key:'giving',pct:.1}].forEach(j => {
+    const amt = inc * j.pct;
+    document.getElementById(`m${mi}_jar-${j.key}`).textContent = fmt(amt);
+    let prog = 0;
+    if (j.key === 'necessities' && amt > 0) prog = Math.min((exp/amt)*100, 100);
+    else prog = inc > 0 ? 100 : 0;
+    document.getElementById(`m${mi}_prog-${j.key}`).style.width = prog + '%';
+  });
+
+  // ── NECESSITIES NOTE ──
+  const noteEl = document.getElementById('m' + mi + '_nec-note');
+  if (noteEl) {
+    if (inc > 0) {
+      const target = inc * 0.5;
+      const diff = target - exp;
+      let cls, icon, msg;
+      if (exp < target) {
+        const diffFmt = '\u20B1' + Math.abs(diff).toLocaleString('en-PH',{maximumFractionDigits:0});
+        cls = 'below'; icon = '\uD83C\uDF89';
+        msg = '<strong>Congrats! You live below your means!</strong><br>You may allocate the difference to other Money Jars!<br><span class="note-diff" style="color:#16a34a;">+ ' + diffFmt + ' available to reallocate</span>';
+      } else if (Math.round(exp) === Math.round(target)) {
+        cls = 'equal'; icon = '\uD83D\uDC4D';
+        msg = '<strong>Congrats, you live within your means!</strong><br>You can increase your income or lessen expenses to gain more money and allocate to your other Money Jars!';
+      } else {
+        const overFmt = '\u20B1' + Math.abs(diff).toLocaleString('en-PH',{maximumFractionDigits:0});
+        cls = 'above'; icon = '\uD83D\uDE1E';
+        msg = '<strong>Oh no! You\'re living beyond your means.</strong><br>Your Money Jar is at risk. Increase your income or lessen unnecessary expenses. You can do it!<br><span class="note-diff" style="color:#dc2626;">- ' + overFmt + ' over budget</span>';
+      }
+      noteEl.className = 'nec-note ' + cls;
+      noteEl.style.display = 'flex';
+      noteEl.innerHTML = '<span class="note-icon">' + icon + '</span><span class="note-text">' + msg + '</span>';
+    } else {
+      noteEl.style.display = 'none';
+    }
+  }
+
+  const tab = document.getElementById(`tab-${mi}`);
+  if (inc > 0 || exp > 0) tab.classList.add('has-data');
+  else tab.classList.remove('has-data');
+}
+
+function buildYearlySummary() {
+  const tbody = document.getElementById('yr-body');
+  tbody.innerHTML = '';
+  let totInc = 0, totExp = 0;
+
+  MONTHS.forEach((m, i) => {
+    const inc = getMonthIncome(i);
+    const exp = getMonthExpense(i);
+    const net = inc - exp;
+    totInc += inc; totExp += exp;
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="month-name">${m.slice(0,3)}</td>
+      <td>${inc > 0 ? fmt(inc) : '—'}</td>
+      <td>${exp > 0 ? fmt(exp) : '—'}</td>
+      <td class="${net >= 0 ? 'positive' : 'negative'}">${(inc > 0 || exp > 0) ? fmt(net) : '—'}</td>`;
+    tbody.appendChild(tr);
+  });
+
+  const totNet = totInc - totExp;
+  document.getElementById('yr-total').innerHTML = `
+    <td class="month-name">TOTAL</td>
+    <td>${fmt(totInc)}</td>
+    <td>${fmt(totExp)}</td>
+    <td class="${totNet >= 0 ? 'positive' : 'negative'}">${fmt(totNet)}</td>`;
+
+  [{key:'necessities',pct:.5},{key:'invest',pct:.1},{key:'play',pct:.1},{key:'savings',pct:.1},{key:'giving',pct:.1}].forEach(j => {
+    const amt = totInc * j.pct;
+    document.getElementById(`yr-jar-${j.key}`).textContent = fmt(amt);
+    let prog = 0;
+    if (j.key === 'necessities' && amt > 0) prog = Math.min((totExp/amt)*100,100);
+    else prog = totInc > 0 ? 100 : 0;
+    document.getElementById(`yr-prog-${j.key}`).style.width = prog + '%';
+  });
+}
+
+function addCustomRow(mi, type) {
+  const isIncome = type === 'income';
+  const containerId = isIncome ? `custom-income-rows-${mi}` : `custom-expense-rows-${mi}`;
+  const container = document.getElementById(containerId);
+  const id = isIncome ? ++customCounts[mi].income : ++customCounts[mi].expense;
+  const rowId = `custom-${type}-row-${mi}-${id}`;
+  const fieldClass = isIncome ? `custom-income-field-${mi}` : `custom-expense-field-${mi}`;
+
+  const div = document.createElement('div');
+  div.className = 'custom-row'; div.id = rowId;
+  div.innerHTML = `
+    <input class="custom-label-input" type="text" placeholder="${isIncome ? 'Income source' : 'Expense name'}">
+    <input class="input-field ${fieldClass}" type="number" placeholder="0" oninput="onInput(${mi})" min="0" style="width:110px;">
+    <button class="remove-btn" onclick="removeRow('${rowId}',${mi})">✕</button>`;
+  container.appendChild(div);
+}
+
+function removeRow(id, mi) {
+  const el = document.getElementById(id);
+  if (el) { el.remove(); calculate(mi); saveAll(); }
+}
+
+// Wire all standard fields to onInput for auto-save
+document.querySelectorAll('.input-field').forEach(el => {
+  const match = el.id && el.id.match(/^m(\d+)_/);
+  if (match) {
+    el.setAttribute('oninput', `onInput(${match[1]})`);
+  }
+});
+
+// Load saved data on startup
+loadAll();
+
+</script>
+</body>
+</html>
